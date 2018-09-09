@@ -1,10 +1,10 @@
 var express = require("express");
 var http = require("http");
 var app = express();
-var server = http.createServer(app).listen(3000);
+var server = http.createServer(app).listen(8080);
 var io = require("socket.io")(server);
 
-app.use(express.static("http://app-c7e123d0-fe63-49b8-8047-eab30282183d.cleverapps.io/public"));
+app.use(express.static("./public"));
 
 io.on("connection", function (socket) {
     socket.on("chat", function (message) {
