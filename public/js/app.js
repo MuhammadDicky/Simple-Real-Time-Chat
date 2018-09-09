@@ -1,4 +1,4 @@
-var socket = io("http://localhost:3000");
+var socket = io("http://app-c7e123d0-fe63-49b8-8047-eab30282183d.cleverapps.io");
 
 socket.on("disconnected", function () {
     setTitle("Disconnected");
