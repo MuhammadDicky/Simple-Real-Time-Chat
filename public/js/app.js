@@ -1,30 +1,66 @@
-var socket = io("http://app-c7e123d0-fe63-49b8-8047-eab30282183d.cleverapps.io");
+$(document).ready(function () {
+    var socket = io();
 
-socket.on("disconnected", function () {
-    setTitle("Disconnected");
+    socket.on("disconnected", function () {
+        setTitle("Disconnected");
+    });
+
+    socket.on("connect", function () {
+        setTitle("Connected to socket server");
+    });
+
+    socket.on("ontype", function (msg) {
+        // $('#type-status').text(msg);
+    });
+
+    socket.on("message", function (message) {
+        printMessage(message.message, null, message.date);
+    });
+
+    $('[name=message]').on('keypress', function (params) {
+        socket.emit("typing");
+    });
+
+    $('[name=message]').on('keyup', function (params) {
+    });
+
+    $('form').submit(function (eve) {
+        eve.preventDefault();
+        
+        var input = $('[name=message]').val();
+        if (input != '') {
+            printMessage(input, 'right');
+            socket.emit("chat", input);
+        }
+        $('[name=message]').val(null);
+    });
+
+    function setTitle(title) {
+        $('#chat-status').text(title);
+    }
+
+    function printMessage(message, pos, date) {
+        if (!pos) {
+            var who = 'Other';
+            var chatName = 'left';
+            var timeStamp = 'right';
+            pos = 'other';
+        } else {
+            var who = 'Me';
+            var chatName = 'right';
+            var timeStamp = 'left';
+            date = Date(Date.now());
+        }
+
+        $('.direct-chat-messages').append(
+            '<div class="direct-chat-msg ' + pos + '">'+
+            '    <div class="direct-chat-info clearfix">'+
+            '        <span class="direct-chat-name pull-'+chatName+'">' + who + '</span>'+
+            '        <span class="direct-chat-timestamp pull-'+timeStamp+'">' + date + '</span>'+
+            '    </div>'+
+            '    <img class="direct-chat-img" src="./assets/img/user-image.png" alt="Message User Image">'+
+            '    <div class="direct-chat-text">' + message + '</div>'+
+            '</div>'
+        );
+    }
 });
-
-socket.on("connect", function () {
-    setTitle("Connected to socket server");
-});
-
-socket.on("message", function (message) {
-    printMessage(message);
-});
-
-document.forms[0].onsubmit = function () {
-    var input = document.getElementById('message');
-    printMessage(input.value);
-    socket.emit("chat", input.value);
-    input.value = '';
-};
-
-function setTitle(title) {
-    document.querySelector('h1').innerHTML = title;
-}
-
-function printMessage(message) {
-    var p = document.createElement('p');
-    p.innerHTML = message;
-    document.querySelector('div.messages').appendChild(p);
-}
