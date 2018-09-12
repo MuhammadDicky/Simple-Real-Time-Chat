@@ -12,7 +12,7 @@ io.on("connection", function (socket) {
         var message = {
             message: message,
             date: timeStamp
-        }
+        };
         socket.broadcast.emit("message", message);
     });
 
