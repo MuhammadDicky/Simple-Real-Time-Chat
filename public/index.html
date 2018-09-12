@@ -1,19 +1,77 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>WebSocket</title>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Simple Cyber Chat</title>
+  <!-- Tell the browser to be responsive to screen width -->
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+  <!-- Bootstrap 3.3.7 -->
+  <link rel="stylesheet" href="./assets/css/bootstrap.min.css">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="./assets/css/css/font-awesome.min.css">
+  <!-- Theme style -->
+  <link rel="stylesheet" href="./assets/dist/AdminLTE.min.css">
+  <!-- AdminLTE Skins. Choose a skin from the css/skins
+       folder instead of downloading all of them to reduce the load. -->
+  <link rel="stylesheet" href="./assets/dist/_all-skins.min.css">
+  <style>
+      .other .direct-chat-text {
+          margin-left: 10px;
+          float: left;
+      }
+      .right .direct-chat-text {
+          margin-right: 10px;
+          float: right;
+      }
+  </style>
 </head>
-<body>
-    <h1>WebSocket</h1>
-    <div class="messages"></div>
-    <form action="javascript:void(0)">
-        <label for="message">&gt;</label>
-        <input type="text" name="text" id="message" required autofocus>
-    </form>
+<body class="hold-transition skin-yellow">
+    
+    <div class="row" style="margin-top:10px; margin-left:10px">
+		<div class="col-md-4">
+            <div class="box box-warning direct-chat direct-chat-warning">
+                <div class="box-header with-border">
+                    <h3 class="box-title">Chat Box<h5 id="type-status"></h5></h3>
+
+                    <div class="box-tools pull-right">
+                        <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+                        </button>
+                    </div>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <!-- Conversations are loaded here -->
+                    <div class="direct-chat-messages">
+                        <div class="direct-chat-msg">
+                            <b><center id="chat-status"></center></b>
+                        </div>
+                    </div>
+                    <!--/.direct-chat-messages-->
+                </div>
+                <!-- /.box-body -->
+                <div class="box-footer">
+                    <form action="#" method="post">
+                        <div class="input-group">
+                        <input type="text" name="message" placeholder="Type Message ..." class="form-control">
+                            <span class="input-group-btn">
+                                <button type="submit" class="btn btn-warning btn-flat">Send</button>
+                            </span>
+                        </div>
+                    </form>
+                </div>
+                <!-- /.box-footer-->
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery 3 -->
+    <script src="./assets/js/jquery.min.js"></script>
+    <!-- Bootstrap 3.3.7 -->
+    <script src="./assets/js/bootstrap.min.js"></script>
     <script src="./js/socket.io.js"></script>
+    <!-- AdminLTE App -->
+    <script src="./assets/dist/adminlte.min.js"></script>
     <script src="./js/app.js"></script>
 </body>
 </html>
