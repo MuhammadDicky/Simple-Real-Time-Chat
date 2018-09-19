@@ -62,5 +62,9 @@ $(document).ready(function () {
             '    <div class="direct-chat-text">' + message + '</div>'+
             '</div>'
         );
+        
+        $('#box-chat .direct-chat-messages').animate({
+			scrollTop: $('#box-chat .direct-chat-messages')[0].scrollHeight
+		});
     }
 });
