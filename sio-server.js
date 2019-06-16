@@ -1,19 +1,20 @@
-var express = require("express");
-var http = require("http");
-var app = express();
-var server = http.createServer(app).listen(8080);
-var io = require("socket.io")(server);
+const express = require("express");
+const http = require("http");
+const app = express();
+const port = 8080;
+const server = http.createServer(app).listen(port);
+const io = require("socket.io")(server);
 
 app.use(express.static("./public"));
 
 io.on("connection", function (socket) {
     socket.on("chat", function (message) {
-        var timeStamp = Date(Date.now());
-        var message = {
+        const broadcast = {
             message: message,
-            date: timeStamp
+            date: Date(Date.now())
         };
-        socket.broadcast.emit("message", message);
+        
+        socket.broadcast.emit("message", broadcast);
     });
 
     socket.on("typing", function () {
@@ -21,4 +22,4 @@ io.on("connection", function (socket) {
     });
 });
 
-console.log("Starting socket app on port 3000");
+console.log(`Starting socket app on port ${port}`);
