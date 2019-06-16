@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Simple Cyber Chat</title>
+  <title>Simple Real-Time Chat</title>
   <!-- Tell the browser to be responsive to screen width -->
   <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
   <!-- Bootstrap 3.3.7 -->
@@ -16,23 +16,67 @@
        folder instead of downloading all of them to reduce the load. -->
   <link rel="stylesheet" href="./assets/dist/_all-skins.min.css">
   <style>
-      .other .direct-chat-text {
-          margin-left: 10px;
-          float: left;
-      }
-      .right .direct-chat-text {
-          margin-right: 10px;
-          float: right;
-      }
+    body {
+        background-color: #ecf0f5;
+    }
+    .user-img img {
+        border-radius: 50%;
+        float: left;
+        width: 40px;
+        height: 40px;
+    }
+    .other .direct-chat-text {
+        margin-left: 10px;
+        float: left;
+    }
+    .right .direct-chat-text {
+        margin-right: 10px;
+        float: right;
+    }
   </style>
 </head>
 <body class="hold-transition skin-yellow">
     
     <div class="row" style="margin-top:10px; margin-left:10px">
+        <div class="col-md-4">
+            <div class="box box-warning" id="box-user-list">
+                <div class="box-header with-border">
+                    <h3 class="box-title"><i class="fa fa-users"></i> Joined User</h3>
+
+                    <div class="box-tools pull-right">
+                        <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+                        </button>
+                    </div>
+                </div>
+                <!-- /.box-header -->
+
+                <div class="box-body">
+                    <div class="box box-widget widget-user-2" id="my-info" style="margin-bottom: 0">
+                        <div class="widget-user-header bg-yellow" style="border-radius: 3px !important">
+                            <div class="widget-user-image">
+                                <img class="img-circle" src="./assets/img/user-image.png" alt="User Avatar">
+                            </div>
+                            <!-- /.widget-user-image -->
+                            <h3 class="widget-user-username user-name">Me:</h3>
+                            <h5 class="widget-user-desc join-date">Join:</h5>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="box-footer">
+                    <h5 class="text-center">No user join yet...</h5>
+                </div>
+                <!-- /.box-body -->
+            </div>
+        </div>
+
 		<div class="col-md-4">
             <div class="box box-warning direct-chat direct-chat-warning">
                 <div class="box-header with-border">
-                    <h3 class="box-title">Chat Box<h5 id="type-status"></h5></h3>
+                    <h3 class="box-title">
+                        Chat Box
+                        <h5 id="type-status"></h5>
+                    </h3>
 
                     <div class="box-tools pull-right">
                         <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
@@ -53,9 +97,9 @@
                 <div class="box-footer">
                     <form action="#" method="post">
                         <div class="input-group">
-                        <input type="text" name="message" placeholder="Type Message ..." class="form-control">
+                        <input type="text" name="message" placeholder="Enter your name" class="form-control input-form">
                             <span class="input-group-btn">
-                                <button type="submit" class="btn btn-warning btn-flat">Send</button>
+                                <button type="submit" class="btn btn-warning btn-flat btn-action">Start Chat</button>
                             </span>
                         </div>
                     </form>
