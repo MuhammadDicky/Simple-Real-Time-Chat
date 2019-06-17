@@ -4,6 +4,8 @@ const app = express();
 const port = 8081;
 const server = http.createServer(app).listen(port);
 const io = require("socket.io")(server);
+const uuidv1 = require("uuid/v1");
+const uuid = require("uuid/v3");
 const users = {};
 var userArray = [];
 
@@ -12,10 +14,19 @@ app.use(express.static("./public"));
 io.on("connection", function (socket) {
 
     socket.on("new-user", function(user) {
+        const id = user.data.id;
+        const userId = uuid(id, uuidv1());
+        user.user[socket.id].userId = userId;
+        user.data.userId = user.data.userId? user.data.userId:userId;
+
         Object.assign(users, user.user);
         userArray.push(user.data);
 
+        // Broadcast new join user
         socket.broadcast.emit("join-user", user.data);
+
+        // send back user id
+        io.to(id).emit("success-join", user.data.userId);
     });
 
     socket.on("get-users", function(userId) {
@@ -28,7 +39,7 @@ io.on("connection", function (socket) {
         const broadcast = {
             message: response.message,
             user: users[response.socketId].username,
-            date: Date(Date.now())
+            date: response.date? response.date:Date(Date.now())
         };
         
         socket.broadcast.emit("message", broadcast);
@@ -42,13 +53,17 @@ io.on("connection", function (socket) {
         socket.broadcast.emit("stop-type", userId);
     });
 
-    socket.on('disconnect', function() {
-        socket.broadcast.emit("user-left", socket.id);
+    socket.on('sign-out', function() {
+        socket.broadcast.emit("user-left", users[socket.id].userId);
+    });
 
+    socket.on('disconnect', function() {
         if (userArray.length > 0) {
             userArray = userArray.filter(function (obj) {
                 if (obj.id !== socket.id) {
                     return obj;
+                } else {
+                    socket.broadcast.emit("user-left", users[obj.id].userId);
                 }
             });
         }

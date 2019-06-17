@@ -1,15 +1,44 @@
 $(document).ready(function () {
     var socket = io();
+    var myData = {};
     var user = {};
     var userList = [];
+    var paddingMessage = [];
+
+    const $myInfo = $('#my-info');
+    const $myUsername = $myInfo.find('.user-name');
+    const $myJoinDate = $myInfo.find('.join-date');
     
     socket.on("disconnect", function () {
         setTitle("<span class='fa fa-exclamation-triangle'></span> Disconnected from socket server");
+        userLeft();
     });
 
     socket.on("connect", function () {
         socket.emit("get-users", socket.id);
         setTitle("<span class='fa fa-check'></span> Connected to socket server");
+
+        // Connect back to socket with current user and new socket id
+        if (myData.id && myData.username) {
+            const data = { id: socket.id, userId:myData.userId, username:myData.username, join: myData.join };
+            myData = data;
+            user = {
+                [socket.id]: data
+            };
+
+            socket.emit('new-user', { user, data});
+        }
+    });
+
+    socket.on("success-join", function (userId) {
+        myData.userId = userId;
+        signOutBtn();
+
+        if (paddingMessage.length > 0) {
+            socket.emit("chat", { message:paddingMessage, socketId:socket.id});
+
+            paddingMessage = [];
+        }
     });
 
     socket.on("on-type", function (obj) {
@@ -21,7 +50,14 @@ $(document).ready(function () {
     });
 
     socket.on("message", function (response) {
-        printMessage(response, false);
+        if (Array.isArray(response.message)) {
+            response.message.forEach(message => {
+                message.user = response.user;
+                printMessage(message, false);
+            });
+        } else if (typeof response === 'object') {
+            printMessage(response, false);
+        }
     });
 
     socket.on("join-user", function (response) {
@@ -39,13 +75,29 @@ $(document).ready(function () {
     });
 
     $('[name=message]').on('keypress', function (params) {
-        socket.emit("typing", socket.id);
+        socket.emit("typing", myData.userId);
     });
 
     $('[name=message]').on('keyup', function (params) {
         setTimeout(() => {
-            socket.emit("stop-typing", socket.id);
+            socket.emit("stop-typing", myData.userId);
         }, 3000);
+    });
+
+    $(document).on('click', '#sign-out', function(eve) {
+        if (socket.id && myData.userId && myData.username) {
+            myData = {};
+            $myUsername.text('Me:');
+            $myJoinDate.text('Join:');
+
+            const $inputTarget = $('[name=message]');
+            $('.btn-action').text('Start Chat');
+            $inputTarget.attr('placeholder', 'Enter your name');
+
+            signOutBtn(false);
+
+            socket.emit('sign-out');
+        }
     });
 
     $('form').submit(function (eve) {
@@ -53,20 +105,26 @@ $(document).ready(function () {
         var $inputTarget = $('[name=message]');
         var input = $inputTarget.val();
 
-        if (typeof user[socket.id] !== 'undefined' && user[socket.id].username && input !== '') {
+        if (myData.id && myData.username && input !== '') {
             printMessage({message:input});
-            socket.emit("chat", { message:input, socketId:socket.id});
             $('[name=message]').val(null);
+
+            // Sending message if socket is connected
+            if (socket.connected) {
+                socket.emit("chat", { message:input, socketId:socket.id});
+            } else {
+                paddingMessage.push({ message:input, date:Date(Date.now()) });
+            }
         } else if (input !== '') {
             const username = input;
             const joinDate = Date(Date.now());
             const data = { id: socket.id, username, join: joinDate };
-            user[socket.id] = data;
+            user[socket.id] = myData = data;
             socket.emit('new-user', { user, data});
 
             const $myInfo = $('#my-info');
-            $myInfo.find('.user-name').text(`Me: ${username}`);
-            $myInfo.find('.join-date').text(joinDate);
+            $myUsername.text(`Me: ${username}`);
+            $myJoinDate.text(joinDate);
             
             $('.btn-action').text('Send');
             $inputTarget.attr('placeholder', 'Type Message ...').val(null);
@@ -104,7 +162,7 @@ $(document).ready(function () {
     }
 
     function joinUser(data) {
-        const { id, username, join } = data;
+        const { userId:id, username, join } = data;
         const listId = 'user-list';
         const $listUser = $(`#${listId}`);
         // Check user-list
@@ -144,24 +202,34 @@ $(document).ready(function () {
         const lookSelector = '#user-list li.item';
         const $userlist = $(lookSelector);
 
-        for (let index = 0; index < $userlist.length; index++) {
-            const element = $userlist[index];
-            const $targetElement = $(element);
-            const { id } = $targetElement.data();
+        if (userId) {
+            for (let index = 0; index < $userlist.length; index++) {
+                const element = $userlist[index];
+                const $targetElement = $(element);
+                const { id } = $targetElement.data();
 
-            if (id === userId) {
-                $targetElement.find('.join-date').text('Keluar dari chat...');
+                if (id === userId) {
+                    $targetElement.find('.join-date').text('Keluar dari chat...');
 
-                setTimeout(function() {
-                    $targetElement.slideUp().remove();
+                    setTimeout(function() {
+                        $targetElement.slideUp().remove();
 
-                    if ($(lookSelector).length === 0) {
-                        $('#box-user-list .box-footer').html('<h5 class="text-center">No user join yet...</h5>');
-                    }
-                }, 1000);
+                        if ($(lookSelector).length === 0) {
+                            $('#box-user-list .box-footer').html('<h5 class="text-center">No user join yet...</h5>');
+                        }
+                    }, 1000);
 
-                break;
+                    break;
+                }
             }
+        } else {
+            const $target = $('#box-user-list .box-footer');
+            $target.append('<h5 class="text-center">Disconnected from chat lobby...</h5>');
+
+            setTimeout(function() {
+                $userlist.slideUp().remove();
+                $target.html('<h5 class="text-center">No user join yet...</h5>');
+            }, 3000);
         }
     }
 
@@ -185,6 +253,23 @@ $(document).ready(function () {
 
                 break;
             }
+        }
+    }
+
+    function signOutBtn(show = true) {
+        const $targetElement = $('#box-user-list .box-header .box-tools');
+        const idSelector = 'sign-out';
+
+        if (show) {
+            $targetElement.prepend($('<button></button>', {
+                type: 'button',
+                class: 'btn btn-box-tool',
+                title: 'Sign-Out',
+                id: idSelector,
+                html: '<i class="fa fa-sign-out"></i>'
+            }));
+        } else {
+            $targetElement.find(`#${idSelector}`).remove();
         }
     }
 });

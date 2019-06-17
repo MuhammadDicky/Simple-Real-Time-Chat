@@ -37,7 +37,8 @@
 </head>
 <body class="hold-transition skin-yellow">
     
-    <div class="row" style="margin-top:10px; margin-left:10px">
+    <section class="content">
+    <div class="row" style="margin-top:10px;">
         <div class="col-md-4">
             <div class="box box-warning" id="box-user-list">
                 <div class="box-header with-border">
@@ -74,8 +75,10 @@
             <div class="box box-warning direct-chat direct-chat-warning">
                 <div class="box-header with-border">
                     <h3 class="box-title">
-                        Chat Box
-                        <h5 id="type-status"></h5>
+                        <span class="fa fa-commenting"></span> Chat Box
+                        <h5 id="chat-status" style="margin-bottom: 0">
+                            <span class="fa fa-exchange"></span> Connecting to socket server...
+                        </h5>
                     </h3>
 
                     <div class="box-tools pull-right">
@@ -84,16 +87,17 @@
                     </div>
                 </div>
                 <!-- /.box-header -->
+
                 <div class="box-body" id="box-chat">
                     <!-- Conversations are loaded here -->
                     <div class="direct-chat-messages">
                         <div class="direct-chat-msg">
-                            <b><center id="chat-status"></center></b>
                         </div>
                     </div>
                     <!--/.direct-chat-messages-->
                 </div>
                 <!-- /.box-body -->
+                
                 <div class="box-footer">
                     <form action="#" method="post">
                         <div class="input-group">
@@ -108,6 +112,7 @@
             </div>
         </div>
     </div>
+    </section>
 
     <!-- jQuery 3 -->
     <script src="./assets/js/jquery.min.js"></script>
