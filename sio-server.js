@@ -54,21 +54,25 @@ io.on("connection", function (socket) {
     });
 
     socket.on('sign-out', function() {
-        socket.broadcast.emit("user-left", users[socket.id].userId);
+        signOutUser(socket);
     });
 
     socket.on('disconnect', function() {
-        if (userArray.length > 0) {
-            userArray = userArray.filter(function (obj) {
-                if (obj.id !== socket.id) {
-                    return obj;
-                } else {
-                    socket.broadcast.emit("user-left", users[obj.id].userId);
-                }
-            });
-        }
+        signOutUser(socket);
     });
 
 });
+
+function signOutUser(socket) {
+    if (userArray.length > 0) {
+        userArray = userArray.filter(function (obj) {
+            if (obj.id !== socket.id) {
+                return obj;
+            } else {
+                socket.broadcast.emit("user-left", users[obj.id].userId);
+            }
+        });
+    }
+}
 
 console.log(`Starting socket app on port ${port}`);
