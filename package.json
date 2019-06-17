@@ -1,5 +1,5 @@
 {
-  "name": "ski-dictionary",
+  "name": "simple-real-time-chat",
   "version": "1.0.0",
   "description": "",
   "main": "sio-server.js",
