@@ -1,13 +1,16 @@
 $(document).ready(function () {
     var socket = io();
     var myData = {};
-    var user = {};
     var userList = [];
     var paddingMessage = [];
+    const defaultAvatar = './assets/img/user-image.png';
 
     const $myInfo = $('#my-info');
     const $myUsername = $myInfo.find('.user-name');
     const $myJoinDate = $myInfo.find('.join-date');
+    const $myImg = $myInfo.find('.widget-user-image img');
+
+    const userlistSelector = '#user-list li.item';
     
     socket.on("disconnect", function () {
         setTitle("<span class='fa fa-exclamation-triangle'></span> Disconnected from socket server");
@@ -22,22 +25,36 @@ $(document).ready(function () {
         if (myData.id && myData.username) {
             const data = { id: socket.id, userId:myData.userId, username:myData.username, join: myData.join };
             myData = data;
-            user = {
-                [socket.id]: data
-            };
 
             socket.emit('new-user', { user, data});
         }
     });
 
-    socket.on("success-join", function (userId) {
-        myData.userId = userId;
-        signOutBtn();
+    socket.on("status-join", function ({ userId, avatar }) {
+        const $userInput = $('[name=message]');
+        // Checking if user successfully join
+        if (userId) {
+            myData.userId = userId;
+            myData.avatar = avatar;
+            
+            $myUsername.text(`Me: ${myData.username}`);
+            $myJoinDate.text(myData.join);
+            $myImg.attr('src', myData.avatar);
+            
+            $('.btn-action').text('Send');
+            $userInput.attr('placeholder', 'Type Message ...').val(null);
 
-        if (paddingMessage.length > 0) {
-            socket.emit("chat", { message:paddingMessage, socketId:socket.id});
+            signOutBtn();
 
-            paddingMessage = [];
+            if (paddingMessage.length > 0) {
+                socket.emit("chat", { message:paddingMessage, socketId:socket.id});
+
+                paddingMessage = [];
+            }
+        } else {
+            myData = {};
+            $userInput.val(null);
+            alert('This username already taking by other!');
         }
     });
 
@@ -70,18 +87,49 @@ $(document).ready(function () {
         }
     });
 
+    socket.on("update-user-info", function (userId, property, propertyValue, newData) {
+        changeUserInfo(userId, property, propertyValue, newData);
+    });
+
+    socket.on("success-update-user", function (property, propertyValue, newData) {
+        if (property === 'avatar') {
+            $myImg.attr('src', propertyValue);
+        }
+
+        Object.assign(myData, newData);
+    });
+
     socket.on("user-left", function (userId) {
         userLeft(userId);
     });
 
-    $('[name=message]').on('keypress', function (params) {
-        socket.emit("typing", myData.userId);
+    $('[name=message]').on({
+        keypress: function (params) {
+            if (myData.userId && myData.username) {
+                socket.emit("typing", myData.userId, myData.id);
+            }
+        },
+        keyup: function (params) {
+            if (myData.userId && myData.username) {
+                setTimeout(function (){
+                    socket.emit("stop-typing", myData.userId, myData.id);
+                }, 3000);
+            }
+        }
     });
 
-    $('[name=message]').on('keyup', function (params) {
-        setTimeout(() => {
-            socket.emit("stop-typing", myData.userId);
-        }, 3000);
+    $myImg.on('click', function (eve) {
+        if (myData.userId && myData.username) {
+            $('.modal').modal('show');
+            $(`#user-avatar-list img[src="${myData.avatar}"]`).next().prop('checked', true);
+        }
+    });
+
+    $('#change-user-avatar').on('click', function(eve) {
+        const avatarId = $('#user-avatar-list input:checked').val();
+
+        socket.emit("change-user-info", 'avatar', avatarId);
+        $('.modal').modal('hide');
     });
 
     $(document).on('click', '#sign-out', function(eve) {
@@ -89,6 +137,7 @@ $(document).ready(function () {
             myData = {};
             $myUsername.text('Me:');
             $myJoinDate.text('Join:');
+            $myImg.attr('src', defaultAvatar);
 
             const $inputTarget = $('[name=message]');
             $('.btn-action').text('Start Chat');
@@ -119,15 +168,9 @@ $(document).ready(function () {
             const username = input;
             const joinDate = Date(Date.now());
             const data = { id: socket.id, username, join: joinDate };
+            const user = { [socket.id]: {} };
             user[socket.id] = myData = data;
             socket.emit('new-user', { user, data});
-
-            const $myInfo = $('#my-info');
-            $myUsername.text(`Me: ${username}`);
-            $myJoinDate.text(joinDate);
-            
-            $('.btn-action').text('Send');
-            $inputTarget.attr('placeholder', 'Type Message ...').val(null);
         }
     });
 
@@ -139,7 +182,7 @@ $(document).ready(function () {
         const $chatContainer = $('<div></div>', {
             class: `direct-chat-msg ${me? 'right':'other'}`,
             html: [
-                '<img class="direct-chat-img" src="./assets/img/user-image.png" alt="Message User Image">',
+                `<img class="direct-chat-img" src="${me? myData.avatar:data.avatar}" alt="User Image">`,
                 `<div class="direct-chat-text">${data.message}</div>`
             ]
         });
@@ -162,7 +205,7 @@ $(document).ready(function () {
     }
 
     function joinUser(data) {
-        const { userId:id, username, join } = data;
+        const { userId:id, username, join, avatar } = data;
         const listId = 'user-list';
         const $listUser = $(`#${listId}`);
         // Check user-list
@@ -176,7 +219,7 @@ $(document).ready(function () {
             html: [
                 $('<div></div>', {
                     class: 'user-img',
-                    html: '<img src="./assets/img/user-image.png" alt="User">'
+                    html: `<img src="${avatar}" alt="User">`
                 }),
                 $('<div></div>', {
                     class: 'product-info',
@@ -199,8 +242,7 @@ $(document).ready(function () {
     }
 
     function userLeft(userId) {
-        const lookSelector = '#user-list li.item';
-        const $userlist = $(lookSelector);
+        const $userlist = $(userlistSelector);
 
         if (userId) {
             for (let index = 0; index < $userlist.length; index++) {
@@ -209,14 +251,16 @@ $(document).ready(function () {
                 const { id } = $targetElement.data();
 
                 if (id === userId) {
-                    $targetElement.find('.join-date').text('Keluar dari chat...');
+                    $targetElement.find('.join-date').text('Sign out from chat lobby...');
 
                     setTimeout(function() {
-                        $targetElement.slideUp().remove();
+                        $targetElement.slideUp(function(eve) {
+                            $(this).remove();
 
-                        if ($(lookSelector).length === 0) {
-                            $('#box-user-list .box-footer').html('<h5 class="text-center">No user join yet...</h5>');
-                        }
+                            if ($(userlistSelector).length === 0) {
+                                $('#box-user-list .box-footer').html('<h5 class="text-center">No user join yet...</h5>');
+                            }
+                        });
                     }, 1000);
 
                     break;
@@ -233,9 +277,47 @@ $(document).ready(function () {
         }
     }
 
+    function changeUserInfo(userId, property, val, newData = false) {
+        const $userlist = $(userlistSelector);
+        const lookUpAttr = {
+            avatar: {
+                selector: '.user-img img',
+                attr: 'src'
+            },
+            join: {
+                selector: '.user-detail',
+                html: val
+            }
+        };
+
+        for (let index = 0; index < $userlist.length; index++) {
+            const element = $userlist[index];
+            const $targetElement = $(element);
+            const targetAttr = lookUpAttr[property];
+            const $detail = $targetElement.find(targetAttr.selector);
+            const { id, data } = $targetElement.data();
+
+            if (id === userId) {
+                // Change attribute
+                if (targetAttr.attr) {
+                    $detail.attr(targetAttr.attr, val);
+                }
+                
+                if (targetAttr.html) {
+                    $detail.html(targetAttr.html);
+                }
+
+                if (newData) {
+                    $targetElement.data('data', newData);
+                }
+
+                break;
+            }
+        }
+    }
+
     function userTyping(state, obj) {
-        const lookSelector = '#user-list li.item';
-        const $userlist = $(lookSelector);
+        const $userlist = $(userlistSelector);
         const userId = typeof obj === 'object'? obj.id:obj;
 
         for (let index = 0; index < $userlist.length; index++) {
