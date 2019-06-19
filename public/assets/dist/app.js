@@ -38,7 +38,7 @@ $(document).ready(function () {
             myData.avatar = avatar;
             
             $myUsername.text(`Me: ${myData.username}`);
-            $myJoinDate.text(myData.join);
+            $myJoinDate.text(convertDate(myData.join));
             $myImg.attr('src', myData.avatar);
             
             $('.btn-action').text('Send');
@@ -118,7 +118,7 @@ $(document).ready(function () {
         }
     });
 
-    $myImg.on('click', function (eve) {
+    $(document).on('click', '.change-user-avatar', function (eve) {
         if (myData.userId && myData.username) {
             $('.modal').modal('show');
             $(`#user-avatar-list img[src="${myData.avatar}"]`).next().prop('checked', true);
@@ -166,8 +166,7 @@ $(document).ready(function () {
             }
         } else if (input !== '') {
             const username = input;
-            const joinDate = Date(Date.now());
-            const data = { id: socket.id, username, join: joinDate };
+            const data = { id: socket.id, username, join: Date.now() };
             const user = { [socket.id]: {} };
             user[socket.id] = myData = data;
             socket.emit('new-user', { user, data});
@@ -183,17 +182,19 @@ $(document).ready(function () {
             class: `direct-chat-msg ${me? 'right':'other'}`,
             html: [
                 `<img class="direct-chat-img" src="${me? myData.avatar:data.avatar}" alt="User Image">`,
-                `<div class="direct-chat-text">${data.message}</div>`
+                `<div class="direct-chat-text"></div>`
             ]
         });
+        $chatContainer.find('.direct-chat-text').text(data.message);
 
         const $chatInfo = $('<div></div>', {
             class: 'direct-chat-info clearfix',
             html: [
-                `<span class="direct-chat-name pull-${me? 'right':'left'}">${me? 'Me':data.user}</span>`,
-                `<span class="direct-chat-timestamp pull-${me? 'left':'right'}">${me? Date(Date.now()):data.date}</span>`
+                `<span class="direct-chat-name pull-${me? 'right':'left'}"></span>`,
+                `<span class="direct-chat-timestamp pull-${me? 'left':'right'}">${me? convertDate(Date.now()):convertDate(data.date)}</span>`
             ]
         });
+        $chatInfo.find('span.direct-chat-name').text(me? 'Me':data.user);
 
         $chatContainer.prepend($chatInfo);
 
@@ -224,12 +225,13 @@ $(document).ready(function () {
                 $('<div></div>', {
                     class: 'product-info',
                     html: [
-                        `<a href="javascript:void(0)" class="product-title user-name">${username}</a>`,
-                        `<span class="product-description join-date user-detail">${join}</span>`
+                        `<a href="javascript:void(0)" class="product-title user-name"></a>`,
+                        `<span class="product-description join-date user-detail">${convertDate(join)}</span>`
                     ]
                 })
             ]
         }).data('id', id).data('data', data);
+        $newUser.find('a.user-name').text(username);
 
         if ($listUser.length > 0 ) {
             $listUser.append($newUser);
@@ -331,7 +333,7 @@ $(document).ready(function () {
 
                 break;
             } else if (id === userId && state === 'stop') {
-                $detail.html(data.join);
+                $detail.html(convertDate(data.join));
 
                 break;
             }
@@ -340,18 +342,32 @@ $(document).ready(function () {
 
     function signOutBtn(show = true) {
         const $targetElement = $('#box-user-list .box-header .box-tools');
-        const idSelector = 'sign-out';
+        const changeAvatarSelector = 'change-user-avatar';
+        const signOutSelector = 'sign-out';
 
         if (show) {
-            $targetElement.prepend($('<button></button>', {
+            $changeAvatar = $('<button></button>', {
+                type: 'button',
+                class: `btn btn-box-tool ${changeAvatarSelector}`,
+                title: 'Change User Avatar',
+                html: '<i class="fa fa-user"></i>'
+            });
+
+            $signOut = $('<button></button>', {
                 type: 'button',
                 class: 'btn btn-box-tool',
                 title: 'Sign-Out',
-                id: idSelector,
+                id: signOutSelector,
                 html: '<i class="fa fa-sign-out"></i>'
-            }));
+            });
+
+            $targetElement.prepend([$changeAvatar, $signOut]);
         } else {
-            $targetElement.find(`#${idSelector}`).remove();
+            $targetElement.find(`#${signOutSelector}, .${changeAvatarSelector}`).remove();
         }
+    }
+
+    function convertDate(date) {
+        return moment(date).fromNow();
     }
 });
