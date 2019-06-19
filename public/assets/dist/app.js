@@ -94,6 +94,7 @@ $(document).ready(function () {
     socket.on("success-update-user", function (property, propertyValue, newData) {
         if (property === 'avatar') {
             $myImg.attr('src', propertyValue);
+            $(`.direct-chat-msg[user-id=${myData.userId}]`).find('img.direct-chat-img').attr('src', propertyValue);
         }
 
         Object.assign(myData, newData);
@@ -183,7 +184,8 @@ $(document).ready(function () {
             html: [
                 `<img class="direct-chat-img" src="${me? myData.avatar:data.avatar}" alt="User Image">`,
                 `<div class="direct-chat-text"></div>`
-            ]
+            ],
+            'user-id': me? myData.userId:data.userId
         });
         $chatContainer.find('.direct-chat-text').text(data.message);
 
@@ -292,6 +294,7 @@ $(document).ready(function () {
             }
         };
 
+        // Change user info on user list
         for (let index = 0; index < $userlist.length; index++) {
             const element = $userlist[index];
             const $targetElement = $(element);
@@ -315,6 +318,13 @@ $(document).ready(function () {
 
                 break;
             }
+        }
+        
+        // Change user info on chat box
+        const $userChat = $(`.direct-chat-msg[user-id=${userId}]`);
+
+        if (property === 'avatar') {
+            $userChat.find('img.direct-chat-img').attr('src', val);
         }
     }
 

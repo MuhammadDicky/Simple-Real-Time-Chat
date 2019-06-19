@@ -61,6 +61,7 @@ io.on("connection", function (socket) {
     socket.on("chat", function (response) {
         const broadcast = {
             message: response.message,
+            userId: users[response.socketId].userId,
             user: users[response.socketId].username,
             date: response.date? response.date:Date(Date.now()),
             avatar: users[response.socketId].avatar,
