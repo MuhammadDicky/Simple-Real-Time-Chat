@@ -1,7 +1,7 @@
 const express = require("express");
 const http = require("http");
 const app = express();
-const port = 8081;
+const port = process.env.PORT || 8081;
 const server = http.createServer(app).listen(port);
 const io = require("socket.io")(server);
 const uuidv1 = require("uuid/v1");
