@@ -11,6 +11,26 @@ $(document).ready(function () {
     const $myImg = $myInfo.find('.widget-user-image img');
 
     const userlistSelector = '#user-list li.item';
+
+    // Init ion sound for notification
+    ion.sound({
+        sounds: [
+            {
+                name: "unconvinced",
+                alias: "new_user"
+            },
+            {
+                name: "open-ended",
+                alias: "new_message"
+            }
+        ],
+    
+        // main config
+        path: "assets/sounds/",
+        preload: true,
+        multiplay: true,
+        volume: 0.9
+    });
     
     socket.on("disconnect", function () {
         setTitle("<span class='fa fa-exclamation-triangle'></span> Disconnected from socket server");
@@ -204,7 +224,11 @@ $(document).ready(function () {
         
         $('#box-chat .direct-chat-messages').animate({
 			scrollTop: $('#box-chat .direct-chat-messages')[0].scrollHeight
-		});
+        });
+        
+        if (!me) {
+            playNotification('message');
+        }
     }
 
     function joinUser(data) {
@@ -243,6 +267,7 @@ $(document).ready(function () {
         }
 
         userList.push(data);
+        playNotification('user');
     }
 
     function userLeft(userId) {
@@ -380,4 +405,14 @@ $(document).ready(function () {
     function convertDate(date) {
         return moment(date).fromNow();
     }
+
+    function playNotification(action) {
+        // Play sound
+        if (action === 'user') {
+            ion.sound.play("new_user");
+        } else if (action === 'message') {
+            ion.sound.play("new_message");
+        }
+    }
+
 });
